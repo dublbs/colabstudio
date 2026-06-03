@@ -1,0 +1,256 @@
+.preview-bar-container {
+  height: 52px;
+  background-color: var(--bg-panel);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  z-index: 990;
+  user-select: none;
+  font-family: var(--font-family);
+}
+
+.preview-bar-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.preview-bar-scroll {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 8px 0;
+  align-items: center;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+.preview-bar-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.preview-bar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.preview-bar-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+
+.preview-bar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.no-preview-files {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.preview-file-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.preview-file-card:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.preview-card-icon {
+  font-size: 13px;
+}
+
+.preview-card-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Quicklook Mac style modal */
+.quicklook-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.quicklook-modal {
+  width: 90%;
+  max-width: 600px;
+  height: 400px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.quicklook-header {
+  height: 40px;
+  background: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  position: relative;
+}
+
+.mac-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.mac-buttons span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.mac-close { background-color: #ff5f56; }
+.mac-minimize { background-color: #ffbd2e; }
+.mac-expand { background-color: #27c93f; }
+
+.quicklook-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.quicklook-body {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  background: #ffffff;
+}
+
+.quicklook-code {
+  margin: 0;
+  font-family: Menlo, Monaco, Consolas, Courier New, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #333;
+  text-align: left;
+}
+
+/* Support for Dark Mode in Quicklook and Preview Bar */
+body[data-theme='dark'] .preview-bar-container {
+  background-color: var(--bg-panel);
+}
+body[data-theme='dark'] .preview-bar-scroll {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+body[data-theme='dark'] .preview-bar-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+body[data-theme='dark'] .preview-file-card {
+  background-color: transparent;
+  border: none;
+}
+body[data-theme='dark'] .preview-file-card:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+body[data-theme='dark'] .quicklook-modal {
+  background: rgba(30, 30, 30, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+}
+body[data-theme='dark'] .quicklook-header {
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+body[data-theme='dark'] .quicklook-title {
+  color: #f3f4f6;
+}
+body[data-theme='dark'] .quicklook-body {
+  background: #1e1e1e;
+}
+body[data-theme='dark'] .quicklook-code {
+  color: #e3e3e3;
+}
+
+.preview-close-btn {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #ff5f56;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.2s ease;
+  margin-left: auto;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.preview-close-btn:hover {
+  background-color: #ff3b30;
+}
+
+.preview-close-btn::after {
+  content: '×';
+  color: #4c0002;
+  font-size: 11px;
+  font-weight: bold;
+  opacity: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -55%);
+}
+
+.preview-close-btn:hover::after {
+  opacity: 1;
+}
+
+.card-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0px 4px 2px 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.card-close-btn:hover {
+  background-color: rgba(255, 95, 86, 0.15);
+  color: #ff5f56;
+}

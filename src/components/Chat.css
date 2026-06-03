@@ -1,0 +1,107 @@
+.messages-container {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-primary);
+}
+
+.messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100%;
+  justify-content: flex-end;
+}
+
+.no-messages {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 20px;
+}
+
+.message-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.message-bubble.self {
+  align-self: flex-end;
+  background-color: var(--accent-color);
+  color: white;
+  border-bottom-right-radius: 2px;
+}
+
+.message-bubble.other {
+  align-self: flex-start;
+  background-color: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-bottom-left-radius: 2px;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+}
+
+.message-bubble.self .sender {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+}
+
+.message-bubble.other .sender {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+.time {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.message-bubble.self .time {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.message-content {
+  word-break: break-word;
+}
+
+.chat-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  display: flex;
+  gap: 10px;
+}
+
+.chat-footer .auth-input {
+  flex: 1;
+}
+
+.send-btn {
+  background: var(--accent-color);
+  border: none;
+  border-radius: 8px;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.2s ease;
+}
+
+.send-btn:hover {
+  background: var(--accent-hover);
+}
