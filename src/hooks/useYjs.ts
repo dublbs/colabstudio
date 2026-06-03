@@ -22,7 +22,7 @@ export function useYjs(roomName: string, initialUsername?: string): YjsSession {
   const doc = useMemo(() => new Y.Doc(), []);
 
   const provider = useMemo(() => {
-    const wsServerUrl = import.meta.env.VITE_YJS_WS_SERVER || 'wss://y-websocket-demo.glitch.me';
+    const wsServerUrl = import.meta.env.VITE_YJS_WS_SERVER || 'wss://demos.yjs.dev/ws';
     console.log(`Conectando a Yjs WS en: ${wsServerUrl} para la sala ${roomName}`);
     
     try {
