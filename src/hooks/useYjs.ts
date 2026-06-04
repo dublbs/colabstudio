@@ -11,27 +11,22 @@ export interface YjsSession {
 
 export function useYjs(roomName: string, initialUsername?: string): YjsSession {
   const [connected, setConnected] = useState(false);
-  
-  // Seteamos un nombre de usuario por defecto
+
   const username = useMemo(() => {
     if (initialUsername) return initialUsername;
     const names = ['Pipe', 'Amaro', 'Colaborador-1', 'Colaborador-2'];
     return names[Math.floor(Math.random() * names.length)];
   }, [initialUsername]);
 
-  const doc = useMemo(() => new Y.Doc(), []);
+  const doc = useMemo(() => new Y.Doc(), [roomName]);
 
   const provider = useMemo(() => {
     const wsServerUrl = import.meta.env.VITE_YJS_WS_SERVER || 'wss://demos.yjs.dev/ws';
-    console.log(`Conectando a Yjs WS en: ${wsServerUrl} para la sala ${roomName}`);
-    
+    console.log(`[Yjs] Conectando a ${wsServerUrl} | sala: ${roomName}`);
     try {
-      const wsProvider = new WebsocketProvider(wsServerUrl, roomName, doc, {
-        connect: true
-      });
-      return wsProvider;
+      return new WebsocketProvider(wsServerUrl, roomName, doc, { connect: true });
     } catch (e) {
-      console.error('Error al inicializar WebsocketProvider:', e);
+      console.error('[Yjs] Error al conectar WebsocketProvider:', e);
       return null;
     }
   }, [doc, roomName]);
@@ -40,16 +35,17 @@ export function useYjs(roomName: string, initialUsername?: string): YjsSession {
     if (!provider) return;
 
     const handleStatus = (event: { status: string }) => {
-      console.log('Estado de conexión Yjs:', event.status);
       setConnected(event.status === 'connected');
     };
 
     provider.on('status', handleStatus);
+    
+    // Sincronizar estado inmediato por si ya se conectó en localhost
+    setConnected(provider.wsconnected);
 
-    // Configurar Awareness (Presencia)
     provider.awareness.setLocalStateField('user', {
       name: username,
-      color: '#' + Math.floor(Math.random()*16777215).toString(16) // Color aleatorio para cursores
+      color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
     });
 
     return () => {
@@ -59,10 +55,5 @@ export function useYjs(roomName: string, initialUsername?: string): YjsSession {
     };
   }, [provider, doc, username]);
 
-  return {
-    doc,
-    provider,
-    connected,
-    username
-  };
+  return { doc, provider, connected, username };
 }

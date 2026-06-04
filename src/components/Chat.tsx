@@ -92,7 +92,11 @@ export const Chat: React.FC<ChatProps> = ({ doc, username, isOpen, onToggle }) =
         </div>
       </div>
 
-      <div className="panel-body messages-container">
+      <div 
+        className="panel-body messages-container"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+      >
         <div className="messages-list">
           {messages.length === 0 ? (
             <div className="no-messages">No hay mensajes. ¡Di hola! 👋</div>

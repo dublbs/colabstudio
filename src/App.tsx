@@ -1,10 +1,31 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useYjs } from './hooks/useYjs';
 import { Sidebar } from './components/Sidebar';
 import { Whiteboard } from './components/Whiteboard';
 import { Chat } from './components/Chat';
 import { TopBar } from './components/TopBar';
 import { FilePreviewBar } from './components/FilePreviewBar';
+
+const DEFAULT_ROOMS: Record<string, string> = {
+  'sala-1': 'Sala Principal 🚀',
+  'sala-2': 'Diseño y UI 🎨',
+  'sala-3': 'Feedback y Tareas 📝',
+};
+
+function loadRooms(): Record<string, string> {
+  try {
+    const saved = localStorage.getItem('colab_rooms');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Object.keys(parsed).length > 0) return parsed;
+    }
+  } catch (_) {}
+  return { ...DEFAULT_ROOMS };
+}
+
+function saveRooms(rooms: Record<string, string>) {
+  localStorage.setItem('colab_rooms', JSON.stringify(rooms));
+}
 
 function App() {
   const [tempName, setTempName] = useState('');
@@ -16,20 +37,20 @@ function App() {
   const [openFiles, setOpenFiles] = useState<any[]>([]);
   const [activeFile, setActiveFile] = useState<any>(null);
 
-  // Obtener o generar un ID de sala único de la URL
-  const roomName = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    let room = params.get('room');
-    if (!room) {
-      room = 'colab-' + Math.random().toString(36).substring(2, 9);
-      const newUrl = `${window.location.pathname}?room=${room}`;
-      window.history.replaceState({}, '', newUrl);
-    }
-    return room;
-  })[0];
+  // Salas desde localStorage — instantáneo, sin race condition de WebSocket
+  const [rooms, setRooms] = useState<Record<string, string>>(loadRooms);
 
-  // Sincronizar Yjs una vez que tenemos el nombre de usuario
-  const { doc, connected } = useYjs(roomName, username || undefined);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const roomParam = params.get('room');
+    // Validar que la sala del URL existe
+    const currentRooms = loadRooms();
+    return roomParam && currentRooms[roomParam] ? roomParam : null;
+  });
+
+  // Sincronizar Yjs una vez que tenemos la sala seleccionada
+  const activeRoomId = selectedRoomId || 'colab-dummy-lobby';
+  const { doc, provider, connected } = useYjs(activeRoomId, username || undefined);
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +59,33 @@ function App() {
       setUsername(name);
       localStorage.setItem('colab_username', name);
     }
+  };
+
+  const handleSelectRoom = useCallback((roomId: string) => {
+    setSelectedRoomId(roomId);
+    window.history.replaceState({}, '', `${window.location.pathname}?room=${roomId}`);
+  }, []);
+
+  const handleCreateRoom = useCallback(() => {
+    const newId = 'sala-' + Math.random().toString(36).substring(2, 9);
+    const updated = { ...rooms, [newId]: 'Nueva Sala ✨' };
+    setRooms(updated);
+    saveRooms(updated);
+    handleSelectRoom(newId);
+  }, [rooms, handleSelectRoom]);
+
+  const handleRenameRoom = useCallback((roomId: string, newName: string) => {
+    setRooms(prev => {
+      const updated = { ...prev, [roomId]: newName };
+      saveRooms(updated);
+      return updated;
+    });
+  }, []);
+
+  const handleLeaveRoom = () => {
+    setSelectedRoomId(null);
+    const newUrl = window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
   };
 
   const handleOpenFile = (file: any) => {
@@ -82,9 +130,63 @@ function App() {
               />
             </div>
             <button type="submit" className="btn">
-              Entrar al Espacio de Trabajo
+              Ingresar Nombre
             </button>
           </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Si tiene nombre pero no ha elegido una sala, mostrar el selector
+  if (!selectedRoomId) {
+    return (
+      <div className="auth-overlay">
+        <div className="auth-card" style={{ maxWidth: '500px', width: '95%' }}>
+          <h1 className="auth-title">Salas de Trabajo</h1>
+          <p className="auth-subtitle">Selecciona o crea una sala para colaborar</p>
+          
+          <div className="rooms-list">
+            {Object.entries(rooms).map(([id, name]) => (
+              <div key={id} className="room-item-card">
+                <div className="room-info-wrapper">
+                  <input
+                    type="text"
+                    className="room-name-input"
+                    value={name}
+                    onChange={(e) => handleRenameRoom(id, e.target.value)}
+                    title="Haz clic para renombrar la sala"
+                  />
+                  <span className="room-connection-id">ID: {id}</span>
+                </div>
+                <button 
+                  onClick={() => handleSelectRoom(id)}
+                  className="btn btn-room-join"
+                >
+                  Entrar
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="rooms-action-bar">
+            <button 
+              onClick={handleCreateRoom} 
+              className="btn btn-create-room"
+            >
+              + Crear Nueva Sala
+            </button>
+            <button 
+              onClick={() => {
+                setUsername(null);
+                localStorage.removeItem('colab_username');
+              }} 
+              className="btn btn-secondary"
+              style={{ width: 'auto', padding: '12px 20px' }}
+            >
+              Salir
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -100,6 +202,9 @@ function App() {
         isRightPanelOpen={isRightPanelOpen}
         setIsRightPanelOpen={setIsRightPanelOpen}
         doc={doc}
+        roomName={activeRoomId}
+        roomDisplayName={rooms[activeRoomId] || activeRoomId}
+        onLeaveRoom={handleLeaveRoom}
       />
       <FilePreviewBar 
         openFiles={openFiles} 
@@ -118,7 +223,7 @@ function App() {
           onOpenFile={handleOpenFile}
         />
 
-        {/* Canvas Central: Pizarra Excalidraw */}
+        {/* Canvas Central: Pizarra BlockSuite */}
         <div className="canvas-container">
           {/* Toggle Sidebar Izquierda (Solo visible cuando está oculto) */}
           {!isLeftPanelOpen && (
@@ -151,7 +256,19 @@ function App() {
             </button>
           )}
 
-          <Whiteboard doc={doc} username={username} />
+          {!connected && (
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 20,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(248,249,250,0.8)', backdropFilter: 'blur(4px)',
+              fontSize: '14px', color: 'var(--text-secondary)',
+              flexDirection: 'column', gap: '12px'
+            }}>
+              <div style={{ width: 24, height: 24, border: '2px solid var(--border-color)', borderTopColor: 'var(--accent-color)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              Conectando a la sala...
+            </div>
+          )}
+          <Whiteboard doc={doc} provider={provider} username={username} onOpenFile={handleOpenFile} />
 
           {/* Toggle Chat Derecho (Solo visible cuando está oculto) */}
           {!isRightPanelOpen && (

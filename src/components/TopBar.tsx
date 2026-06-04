@@ -10,6 +10,9 @@ interface TopBarProps {
   isRightPanelOpen: boolean;
   setIsRightPanelOpen: (val: boolean) => void;
   doc: Y.Doc;
+  roomName: string;
+  roomDisplayName: string;
+  onLeaveRoom: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -19,7 +22,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   setIsLeftPanelOpen,
   isRightPanelOpen,
   setIsRightPanelOpen,
-  doc
+  doc,
+  roomName: _roomName,
+  roomDisplayName,
+  onLeaveRoom
 }) => {
   const [time, setTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   const [isControlPanelOpen, setIsControlPanelOpen] = useState(false);
@@ -36,13 +42,13 @@ export const TopBar: React.FC<TopBarProps> = ({
   }, []);
 
   useEffect(() => {
-    const elementsMap = doc.getMap('excalidraw-elements');
+    const elementsArray = doc.getArray<any>('excalidraw-elements');
     const updateStats = () => {
-      setElementCount(Array.from(elementsMap.values()).filter((el: any) => !el.isDeleted).length);
+      setElementCount(elementsArray.toArray().filter((el: any) => !el.isDeleted).length);
     };
-    elementsMap.observe(updateStats);
+    elementsArray.observe(updateStats);
     updateStats();
-    return () => elementsMap.unobserve(updateStats);
+    return () => elementsArray.unobserve(updateStats);
   }, [doc]);
 
   return (
@@ -51,6 +57,31 @@ export const TopBar: React.FC<TopBarProps> = ({
       <div className="top-bar-left">
         <span className="logo-item" onClick={() => setIsControlPanelOpen(!isControlPanelOpen)}>
           ▲ colab
+        </span>
+
+        <span 
+          className="room-badge" 
+          onClick={onLeaveRoom} 
+          title="Cambiar de sala"
+          style={{
+            background: 'var(--bg-primary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '20px',
+            padding: '4px 12px',
+            fontSize: '12px',
+            fontWeight: 600,
+            color: 'var(--accent-color)',
+            marginLeft: '12px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.2s ease',
+            userSelect: 'none'
+          }}
+        >
+          <span>Sala: {roomDisplayName}</span>
+          <span style={{ fontSize: '10px', opacity: 0.8 }}>⇄</span>
         </span>
         
         <div className="menu-group">
@@ -83,11 +114,11 @@ export const TopBar: React.FC<TopBarProps> = ({
             {activeMenu === 'whiteboard' && (
               <div className="menu-dropdown">
                 <div className="dropdown-item" onClick={() => { 
-                  const elementsMap = doc.getMap('excalidraw-elements');
+                  const elementsArray = doc.getArray<any>('excalidraw-elements');
+                  const updated = elementsArray.toArray().map(el => ({ ...el, isDeleted: true }));
                   doc.transact(() => {
-                    elementsMap.forEach((el: any) => {
-                      elementsMap.set(el.id, { ...el, isDeleted: true });
-                    });
+                    elementsArray.delete(0, elementsArray.length);
+                    elementsArray.insert(0, updated);
                   });
                   setActiveMenu(null);
                 }}>Limpiar Pizarra</div>

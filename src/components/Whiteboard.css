@@ -1,9 +1,379 @@
-.whiteboard-wrapper {
+/* Contenedor del lienzo infinito */
+.whiteboard-container {
   width: 100%;
   height: 100%;
   position: relative;
+  overflow: hidden;
+  background-color: #f8f9fa; /* Fondo gris claro limpio */
+  cursor: grab;
+  user-select: none;
+  /* Rejilla de puntos infinita que se actualiza dinámicamente con inline styles */
+  background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
 }
 
-.excalidraw .layer-ui__wrapper {
-  background: transparent !important;
+.whiteboard-container:active {
+  cursor: grabbing;
 }
+
+/* Tablero infinito donde residen las tarjetas y formas */
+.canvas-infinite-board {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none; /* Dejar pasar los clicks al fondo */
+}
+
+/* Capa SVG para dibujos */
+.canvas-svg-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Tarjeta base del lienzo */
+.canvas-card {
+  position: absolute;
+  width: 140px;
+  min-height: 130px;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: move;
+  transition: transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+  pointer-events: auto; /* Reactivar clicks para tarjetas */
+}
+
+/* Tarjeta tipo Archivo/Carpeta con Glassmorphism premium */
+.file-card, .folder-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.03), 
+    0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.canvas-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-color);
+  box-shadow: 
+    0 12px 20px rgba(0, 0, 0, 0.06), 
+    0 4px 6px rgba(79, 70, 229, 0.05);
+}
+
+/* Estado mientras se arrastra la tarjeta */
+.canvas-card.dragging {
+  cursor: grabbing;
+  transform: scale(1.05) translateY(-4px);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: var(--accent-color);
+  z-index: 100;
+}
+
+/* Botón para eliminar tarjeta */
+.card-delete-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ff4d4f;
+  color: white;
+  border: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 5;
+}
+
+.canvas-card:hover .card-delete-btn {
+  opacity: 1;
+}
+
+.card-delete-btn:hover {
+  transform: scale(1.2);
+  background: #ff7875;
+}
+
+/* Iconos macOS */
+.mac-file-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+  transition: transform 0.2s ease;
+}
+
+.canvas-card:hover .mac-file-icon {
+  transform: scale(1.1);
+}
+
+/* Textos de la tarjeta */
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
+}
+
+.card-subtitle {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-action-hint {
+  font-size: 8px;
+  color: var(--accent-color);
+  margin-top: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.canvas-card:hover .card-action-hint {
+  opacity: 0.8;
+}
+
+/* Tarjeta tipo Nota Adhesiva (Post-It) */
+.note-card {
+  width: 200px;
+  min-height: 200px;
+  border-radius: 6px; /* Bordes rectos clásicos de post-it */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.card-note-content {
+  width: 100%;
+  height: 100%;
+}
+
+.card-note-textarea {
+  width: 100%;
+  height: 160px;
+  background: transparent;
+  border: none;
+  resize: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #2c3e50;
+  outline: none;
+}
+
+/* Controles flotantes de zoom */
+.canvas-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.control-btn {
+  background: transparent;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.control-btn:hover {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.reset-btn {
+  width: auto;
+  font-size: 11px;
+  padding: 0 10px;
+  font-weight: 500;
+}
+
+.zoom-indicator {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 45px;
+  text-align: center;
+}
+
+/* Ayuda flotante */
+.canvas-help-badge {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(10, 11, 13, 0.75);
+  backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 11px;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+/* Barra de herramientas flotante de dibujo (Excalidraw Clone) */
+.drawing-toolbar {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  border-radius: 14px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.05),
+    0 8px 10px -6px rgba(0, 0, 0, 0.03);
+  z-index: 100;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drawing-toolbar:hover {
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.07),
+    0 10px 10px -5px rgba(0, 0, 0, 0.05);
+  border-color: rgba(79, 70, 229, 0.2);
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border-color);
+  margin: 0 4px;
+}
+
+.tool-btn {
+  background: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tool-btn:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+.tool-btn.active {
+  background-color: var(--accent-color);
+  color: white;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+}
+
+/* Tooltip nativo */
+.tool-btn::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(10, 11, 13, 0.85);
+  color: white;
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.15s ease;
+}
+
+.tool-btn:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Cursores Colaborativos (Puntero Láser) */
+.collaborative-cursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Suavizar el movimiento del mouse de red */
+  transition: left 0.08s cubic-bezier(0.1, 0.8, 0.25, 1), top 0.08s cubic-bezier(0.1, 0.8, 0.25, 1);
+}
+
+.laser-pointer-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transition: transform 0.1s ease;
+}
+
+.laser-pointer-label {
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: var(--font-family);
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
